@@ -1,0 +1,7 @@
+.git
+.gitignore
+README.md
+*.md
+stressr
+.vscode
+.idea

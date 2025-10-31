@@ -1,51 +1,53 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
 	"os"
 
+	"github.com/allisson95/fctech-go-expert-desafio-stress-test/internal/stress"
 	"github.com/spf13/cobra"
 )
 
+var (
+	urlFlag         string
+	requestsFlag    int
+	concurrencyFlag int
+)
 
-
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "fctech-go-expert-desafio-stress-test",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Use:   "stressr",
+	Short: "A small CLI to run HTTP stress tests",
+	Long:  `stressr executes concurrent HTTP requests against a target URL and reports metrics.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if urlFlag == "" {
+			cmd.PrintErr("Error: URL flag is required\n")
+			return cmd.Help()
+		}
+		if requestsFlag <= 0 {
+			requestsFlag = 1
+		}
+		if concurrencyFlag <= 0 {
+			concurrencyFlag = 1
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+		report, err := stress.Run(urlFlag, requestsFlag, concurrencyFlag)
+		if err != nil {
+			return err
+		}
+
+		cmd.Println(report.FormatStressReport())
+
+		return nil
+	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.fctech-go-expert-desafio-stress-test.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVar(&urlFlag, "url", "", "URL of the service to be tested")
+	rootCmd.PersistentFlags().IntVar(&requestsFlag, "requests", 1, "Total number of requests to perform")
+	rootCmd.PersistentFlags().IntVar(&concurrencyFlag, "concurrency", 1, "Number of simultaneous calls")
 }
-
-
